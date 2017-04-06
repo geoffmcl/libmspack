@@ -1,3 +1,17 @@
+2017-04-06  Geoff R. McLane <reports _at_ geoffair _dot_ info>
+
+    * Started with fork of https://www.cabextract.org.uk/ GitHub 
+    repository.
+    * Added a CMakeLists.txt file, to use CMake configuration and 
+    makefile, solution file generation
+    * Added a config.h.cmake to be processed by cmake into config.h
+    * Created a 'build' directory, and added build-me.bat for convenience.
+    * Port and build in WIN32/WIN64 environment.
+    * Moved *.c, *.h to 'utils' directory, added conditionally to 
+    a utils_lib.lib...
+    * Add dirent.[c|h] for systems that do not have this.
+    * Some small minor enhancement to cabinfo.c
+    
 2016-04-16  Stuart Caie <kyzer@cabextract.org.uk>
 
 	* configure.ac: change my email address to kyzer@cabextract.org.uk
