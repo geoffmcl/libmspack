@@ -10,7 +10,7 @@ License: GNU GPL Version 3 - See COPYING in the source.
 
 Cabinet (.CAB) files are a form of archive, which Microsoft use to distribute their software, and things like Windows Font Packs. The cabextract program unpacks these files.
 
-For more information, see http://www.cabextract.org.uk/ or run the command 'cabextract --help'. This repository is a simple `fork` of that [source](https://github.com/kyz/libmspack/), with a CMske build system added, and built in WIN32/WIN64 using MSVC 2015 (msvc140).
+For more information, see http://www.cabextract.org.uk/ or run the command 'cabextract --help'. This repository is a simple `fork` of that [source](https://github.com/kyz/libmspack/), with a CMake build system added, and built in WIN32/WIN64 using MSVC 2015 (msvc140).
 
 Microsoft cabinet files should not be confused with InstallShield cabinet files. InstallShield files are generally called "_sys.cab", "data1.hdr" "data1.cab", "data2.cab" and so on, and are found in the same directory as "setup.exe". They begin with the magic characters "ISc(" rather than "MSCF". cabextract will print the message "This is probably an InstallShield file." when it finds such a file. The file "doc/magic" in the cabextract source archive includes additional file-identification rules for the UNIX file(1) command, which distinguishes between Microsoft and InstallShield cabinet files.
 
@@ -33,7 +33,7 @@ $ [sudo] make install (if desired)
 
 #### In Windows:
 
-If for example you have {MS Visual Studio](https://www.visualstudio.com/vs/community/) (MSVC) installed -
+If for example you have [MS Visual Studio](https://www.visualstudio.com/vs/community/) (MSVC) installed -
 
 ```
 > cd build
