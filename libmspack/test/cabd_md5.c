@@ -1,6 +1,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+# if !HAVE_STRCASECMP
+#  define strcasecmp strcmpi
+# endif
 
 #include <stdio.h>
 #include <stdlib.h>
