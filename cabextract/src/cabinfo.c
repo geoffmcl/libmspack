@@ -106,10 +106,12 @@
 
 
 FILE *fh;
-char *filename;
+char *filename = 0;
 FILELEN filelen;
 void search();
 void getinfo();
+
+static int verbose = 0;
 
 #define EndGetI32(a)  ((((a)[3])<<24)|(((a)[2])<<16)|(((a)[1])<<8)|((a)[0]))
 #define EndGetI16(a)  ((((a)[1])<<8)|((a)[0]))
@@ -121,7 +123,6 @@ void getinfo();
 #define READ(buf,len)  if (myread((void *)(buf),(len))) return
 #define SKIP(offset)   if (myseek((offset),SEEK_CUR)) return
 #define SEEK(offset)   if (myseek((offset),SEEK_SET)) return
-
 
 
 int myread(void *buf, int length) {
@@ -142,29 +143,127 @@ int myseek(FILELEN offset, int mode) {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
-  printf("Cabinet information dumper by Stuart Caie <kyzer@cabextract.org.uk>\n");
+void showVersion()
+{
+    printf("Cabinet information dumper version %s\n", VERSION);
+}
 
+const char *justExe(const char *rt)
+{
+    const char *exe = rt;
+    size_t ii, len = strlen(rt);
+    int c;
+    for (ii = 0; ii < len; ii++) {
+        c = rt[ii];
+        if ((c == '\\') || (c == '/')) {
+            if (rt[ii + 1])
+                exe = &rt[ii + 1];
+        }
+    }
+    return exe;
+}
+
+
+void showUsage(const char *exe)
+{
+    showVersion();
+    printf("\n");
+    printf("Usage:\n");
+    printf("%s [options] <file.cab>\n", justExe(exe));
+    printf("\n");
+    printf("Options:\n");
+    printf(" --help     (-h or -?) = This help and exit(0)\n");
+    printf(" --version        (-v) = Show version and exit(0)\n");
+    printf(" --VERSBOE        (-V) = Show more details, and data sections.\n");
+    printf("\n");
+    printf("Authors:\n");
+    printf("Original 1.4 version by Stuart Caie <kyzer@4u.net>, circa 2011-05-11\n");
+    printf("Windows port, and CMake build by Geoff R. McLane <reports _at_ geoffair _dot_ info>\n");
+    printf("See 'AUTHORS' file, in the source, for further information\n");
+    printf("\n");
+    printf("License:\n");
+    printf("GNU GPL Version 3. See 'COPYING' file, in source for text.\n");
+    printf("\n");
+}
+
+int parseArgs(int argc, char *argv[])
+{
+    int i, c;
+    char *arg, *sarg;
+    for (i = 1; i < argc; i++)
+    {
+        arg = argv[i];
+        c = *arg;
+        if ((c == '-') || (c == '/')) {
+            sarg = &arg[1];
+            while (*sarg == '-')
+                sarg++;
+            c = *sarg;
+            switch (c)
+            {
+            case 'h':
+            case '?':
+                showUsage(argv[0]);
+                return 2;
+            case 'v':
+                showVersion();
+                return 2;
+            case 'V':
+                verbose++;
+                break;
+            default:
+                printf("Unknown argument '%s'! Try -?\n", arg);
+                return 1;
+            }
+        }
+        else {
+            if (filename) {
+                printf("Already have file name '%s'! What is this '%s'?\n", filename, arg);
+                return 1;
+            }
+            filename = strdup(arg);
+        }
+    }
+    if (!filename) {
+        showUsage(argv[0]);
+        printf("Error: No file name found in command!\n");
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[]) 
+{
+    int iret = 0;
   if (argc <= 1) {
-    printf("Usage: %s <file.cab>\n", argv[0]);
+        showUsage(argv[0]);
     return 1;
   }
+    iret = parseArgs(argc, argv);
+    if (iret) {
+        if (iret == 2)
+            iret = 0;
+        return iret;
+    }
 
-  if (!(fh = fopen((filename = argv[1]), "rb"))) {
-    perror(filename);
+    fh = fopen(filename, "rb");
+    if (!fh) {
+        printf("Error: Failed to open '%s'\n", filename);
+        // perror(filename);
     return 1;
   }
 
   if (FSEEK(fh, 0, SEEK_END) != 0) {
-    perror(filename);
+        printf("Error: Seek to file '%s' end FAILED!\n", filename);
+        //perror(filename);
     fclose(fh);
     return 1;
   }
 
   filelen = FTELL(fh);
-
   if (FSEEK(fh, 0, SEEK_SET) != 0) {
-    perror(filename);
+        printf("Error: Seek to file '%s' begin FAILED!\n", filename);
+        //perror(filename);
     fclose(fh);
     return 1;
   }
@@ -400,7 +499,13 @@ void getinfo() {
     }
   }
 
-  printf("\n*** FILES SECTION ***\n");
+  printf("\n*** FILES SECTION *** Count %d\n", num_files);
+
+  if (verbose) {
+      printf("Showing verbose details of each section...\n");
+  } else {
+      printf("Use -V to show more than 'date time size name' for each.\n");
+  }
 
   if (GETOFFSET != files_offset) {
     printf("WARNING: weird file offset in header\n");
@@ -433,7 +538,7 @@ void getinfo() {
     READ(&namebuf, CAB_NAMEMAX);
     SEEK(base + strlen((char *) namebuf) + 1);
     if (strlen((char *) namebuf) > 256) printf("WARNING: name length > 256\n");
-
+    if (verbose) {
     printf(
       "\n[New file at offset %" FL "]\n"
       "File name              = %s%s\n"
@@ -464,8 +569,25 @@ void getinfo() {
       (x & cffile_A_NAME_IS_UTF) ? "UTF-8"   : ""
     );
   }
+    else
+    {
+        printf("%02d/%02d/%4d %02d:%02d %12u  %s\n",
+            GETWORD(cffile_Date) & 0x1f,
+            (GETWORD(cffile_Date) >> 5) & 0xf,
+            (GETWORD(cffile_Date) >> 9) + 1980,
+            GETWORD(cffile_Time) >> 11,
+            (GETWORD(cffile_Time) >> 5) & 0x3f,
+            GETLONG(cffile_UncompressedSize),
+            namebuf
+        );
 
-  printf("\n*** DATABLOCKS SECTION ***\n");
+    }
+  }
+
+  printf("\n*** DATABLOCKS SECTION *** Count %d\n", num_blocks);
+
+  if (verbose) {
+
   printf("*** Note: offset is BLOCK offset. Add 8 for DATA offset! ***\n\n");
 
   for (i = 0; i < num_blocks; i++) {
@@ -478,5 +600,10 @@ void getinfo() {
 	   ((x > (32768+6144)) || (y > 32768)) ? " INVALID" : "");
     SKIP(x);
   }
-
+  }
+  else {
+      printf("Use -V to show more details of the data sections\n");
+  }
 }
+
+// eof
