@@ -13,6 +13,8 @@ cmake_minimum_required( VERSION 2.8.8 )
 
 project( cabextract )
 
+option( ADD_TEST_EXES "Set ON to build the set of mspack test apps" OFF )
+
 # The version number.
 set( cabex_MAJOR 1 )
 set( cabex_MINOR 6 )
@@ -227,42 +229,6 @@ list(APPEND add_LIBS ${name})
 ##### EXECUTABLE 3 #####
 #################################################
 
-# tester EXECUTABLE from [libmspack\test],
-# have 13 C/C++ sources, 3 headers
-if (ADD_TEST_EXES)
-    set(name tester)
-    set(dir libmspack/test)
-    set(${name}_SRCS
-        ${dir}/cabd_md5.c
-        ${dir}/cabd_memory.c
-        ${dir}/cabd_test.c
-        ${dir}/cabrip.c
-        ${dir}/chmd_find.c
-        ${dir}/chmd_md5.c
-        ${dir}/chmd_order.c
-        ${dir}/chminfo.c
-        ${dir}/chmx.c
-        ${dir}/expand.c
-        ${dir}/md5.c
-        ${dir}/multifh.c
-        ${dir}/oabx.c
-        )
-    set(${name}_HDRS
-        ${dir}/error.h
-        ${dir}/md5.h
-        ${dir}/md5_fh.h
-        )
-    add_executable( ${name} ${${name}_SRCS} ${${name}_HDRS} )
-    if (add_LIBS)
-        target_link_libraries( ${name} ${add_LIBS} )
-    endif ()
-    if (MSVC)
-        set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
-    endif ()
-    # deal with install, if any...
-    #install( TARGETS ${name} DESTINATION bin )
-endif ()
-
 # src EXECUTABLE from [cabextract\src],
 # have 2 C/C++ sources, 0 headers
 set(name cabextract)
@@ -296,5 +262,28 @@ if (MSVC)
 endif ()
 # deal with install, if any...
 #install( TARGETS ${name} DESTINATION bin )
+
+set(dir libmspack/test)
+set(absdir ${CMAKE_SOURCE_DIR}/${dir})
+# md5.c error.h md5.h md5_fh.h
+set(names cabd_md5 cabd_memory cabd_test cabrip chmd_find chmd_md5 chmd_order chminfo chmx expand multifh oabx)
+# tester EXECUTABLE from [libmspack\test],
+# have 13 C/C++ sources, 3 headers
+MACRO(ADD_TEST name)
+    add_executable(${name} ${ARGN})
+    target_link_libraries(${name} ${add_LIBS} ${extra_LIBS})
+    if(WIN32)
+        set_target_properties(${name} PROPERTIES DEBUG_POSTFIX d)
+    endif()
+    set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-I${absdir}")
+   # deal with install, if any...
+    #install( TARGETS ${name} DESTINATION bin )
+ENDMACRO()
+
+if (ADD_TEST_EXES)
+    foreach( name ${names} )
+        ADD_TEST( ${name} ${dir}/${name}.c )
+    endforeach ()
+endif ()
 
 # eof
