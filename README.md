@@ -45,6 +45,7 @@ CMake also has a [GUI](https://cmake.org/runningcmake/) - Set the `source` direc
 
 Of course, if using MSVC, the generated solution file can be loaded, select the Release build, and build the project.
 
+And of course, in Windows, MinGW, and cygwin should also be supported, but not yet tried...
 
 ### Example usage:
 
