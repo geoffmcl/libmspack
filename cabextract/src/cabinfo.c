@@ -174,7 +174,7 @@ void showUsage(const char *exe)
     printf("Options:\n");
     printf(" --help     (-h or -?) = This help and exit(0)\n");
     printf(" --version        (-v) = Show version and exit(0)\n");
-    printf(" --VERSBOE        (-V) = Show more details, and data sections.\n");
+    printf(" --VERBOSE        (-V) = Show more details, and data sections.\n");
     printf("\n");
     printf("Authors:\n");
     printf("Original 1.4 version by Stuart Caie <kyzer@4u.net>, circa 2011-05-11\n");
